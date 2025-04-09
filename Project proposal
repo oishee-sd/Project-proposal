@@ -1,0 +1,184 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.*;
+
+// Database Connection Class
+class DatabaseManager {
+    private static final String URL = "jdbc:mysql://localhost:3306/quiz_db";
+    private static final String USER = "root";
+    private static final String PASSWORD = "";
+
+    // Establish connection to database
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
+
+    // Save score to database
+    public static void saveScore(String playerName, int score) {
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement("INSERT INTO scores (player_name, score) VALUES (?, ?)");) {
+            stmt.setString(1, playerName);
+            stmt.setInt(2, score);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Retrieve leaderboard from database
+    public static String getLeaderboard() {
+        StringBuilder leaderboard = new StringBuilder("Leaderboard:\n");
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT player_name, score FROM scores ORDER BY score DESC LIMIT 5")) {
+            int rank = 1;
+            while (rs.next()) {
+                leaderboard.append(rank++).append(". ").append(rs.getString("player_name"))
+                        .append(" - ").append(rs.getInt("score")).append("\n");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return leaderboard.toString();
+    }
+}
+
+// Question Class
+class Question {
+    private String question;
+    private String[] options;
+    private int correctAnswer;
+
+    public Question(String question, String[] options, int correctAnswer) {
+        this.question = question;
+        this.options = options;
+        this.correctAnswer = correctAnswer;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public String[] getOptions() {
+        return options;
+    }
+
+    public boolean checkAnswer(int userAnswer) {
+        return userAnswer == correctAnswer;
+    }
+}
+
+// Quiz GUI Class
+class QuizGUI extends JFrame implements ActionListener {
+    private Question[] questions;
+    private int currentQuestionIndex = 0;
+    private int score = 0;
+    private JLabel questionLabel;
+    private JRadioButton[] options;
+    private ButtonGroup group;
+    private JButton nextButton;
+    private String playerName;
+
+    public QuizGUI(Question[] questions, String playerName) {
+        this.questions = questions;
+        this.playerName = playerName;
+
+        setTitle("Java Quiz Game");
+        setSize(500, 300);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // Question Label
+        questionLabel = new JLabel("", JLabel.CENTER);
+        questionLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        add(questionLabel, BorderLayout.NORTH);
+
+        // Options Panel
+        JPanel optionsPanel = new JPanel(new GridLayout(4, 1));
+        options = new JRadioButton[4];
+        group = new ButtonGroup();
+
+        for (int i = 0; i < 4; i++) {
+            options[i] = new JRadioButton();
+            options[i].setFont(new Font("Arial", Font.PLAIN, 14));
+            group.add(options[i]);
+            optionsPanel.add(options[i]);
+        }
+        add(optionsPanel, BorderLayout.CENTER);
+
+        // Button Panel
+        JPanel buttonPanel = new JPanel();
+        nextButton = new JButton("Next");
+        nextButton.addActionListener(this);
+        buttonPanel.add(nextButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        loadQuestion();
+        setVisible(true);
+    }
+
+    private void loadQuestion() {
+        if (currentQuestionIndex < questions.length) {
+            Question q = questions[currentQuestionIndex];
+            questionLabel.setText(q.getQuestion());
+            String[] opts = q.getOptions();
+            group.clearSelection();
+
+            for (int i = 0; i < 4; i++) {
+                options[i].setText(opts[i]);
+            }
+        } else {
+            DatabaseManager.saveScore(playerName, score);
+            String leaderboard = DatabaseManager.getLeaderboard();
+            JOptionPane.showMessageDialog(this, "Quiz Over! " + playerName + "'s Score: " + score + "/" + questions.length + "\n\n" + leaderboard);
+            System.exit(0);
+        }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        for (int i = 0; i < 4; i++) {
+            if (options[i].isSelected()) {
+                if (questions[currentQuestionIndex].checkAnswer(i + 1)) {
+                    score++;
+                }
+                currentQuestionIndex++;
+                loadQuestion();
+                return;
+            }
+        }
+        JOptionPane.showMessageDialog(this, "Please select an answer!");
+    }
+}
+
+// Main class to run the quiz
+public class QuizGame {
+    public static void main(String[] args) {
+        // Ask for player's name before the quiz starts
+        String playerName = JOptionPane.showInputDialog("Enter your name:");
+
+        if (playerName == null || playerName.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Name is required!");
+            return;
+        }
+
+        // List of questions (Java-related)
+        Question[] questions = {
+            new Question("What does JVM stand for?", new String[]{"Java Variable Management", "Java Virtual Machine", "Java Visible Machine", "Java Verifiable Machine"}, 2),
+            new Question("Which one is used to declare a constant in Java?", new String[]{"final", "const", "static", "public"}, 1),
+            new Question("What is the default value of a boolean in Java?", new String[]{"true", "false", "null", "0"}, 2),
+            new Question("Which keyword is used to inherit a class in Java?", new String[]{"extends", "implements", "inherits", "includes"}, 1),
+            new Question("Which of the following is not a valid Java data type?", new String[]{"int", "float", "double", "real"}, 4),
+            new Question("What is the size of an int in Java?", new String[]{"16 bits", "32 bits", "64 bits", "128 bits"}, 2),
+            new Question("Which method is used to start a thread in Java?", new String[]{"start()", "run()", "init()", "execute()"}, 1),
+            new Question("Which operator is used to compare two values in Java?", new String[]{"=", "==", "equals()", "compare()"}, 2),
+            new Question("What does the 'this' keyword refer to in Java?", new String[]{"Current class instance", "Current method", "Current package", "Current object"}, 1),
+            new Question("Which of these is a Java programming language feature?", new String[]{"Object-Oriented", "Procedural", "Functional", "All of the above"}, 1)
+        };
+
+        // Start the quiz with the given player name
+        new QuizGUI(questions, playerName);
+    }
+}
