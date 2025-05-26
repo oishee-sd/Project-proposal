@@ -1,26 +1,36 @@
-# Project-proposal
-What the Project Does
-This project is a Java-based quiz game where a player answers multiple-choice questions. After completing the quiz, the player’s score is saved in a MySQL database, and the top 5 scores (leaderboard) are shown.
----
-How It Works
-1. Player Name Input
-When the program starts, it asks the player to enter their name.
-2. Displaying Questions
-The quiz window shows one question at a time with 4 options using radio buttons.
-3. Answering Questions
-The player selects an answer and clicks the Next button. If the answer is correct, the score increases.
-4. Saving Score and Showing Leaderboard
-After the last question:
-The score is saved in the MySQL database.
-The top 5 scores are shown using a popup message.
----
-Main Parts of the Code
-DatabaseManager: Connects to MySQL, saves scores, and retrieves the leaderboard.
-Question: Holds a single question, its options, and the correct answer.
-QuizGUI: The main GUI where the quiz runs.
-QuizGame (Main): Starts the quiz by asking the name and launching the GUI.
---
-Technologies Used
-Java Swing for GUI
-MySQL for storing scores
-JDBC for database connectivity
+Project Title: Java Swing-Based Quiz Game
+
+Overview:
+
+This project is a desktop application developed using Java Swing. It is a multiple-choice question (MCQ)-based quiz game where the user can enter their name, choose a subject and difficulty level, and answer questions accordingly.
+
+Features:
+
+Player Name Input: The user enters their name before starting the game.
+Category Selection: Subjects like Java, DBMS, and C Programming.
+Difficulty Levels: Easy, Medium, Hard – according to the complexity of questions.
+Multiple Choice Questions (MCQ): Each question has four options.
+Score Calculation: Points are added for each correct answer.
+Graphical User Interface (GUI): Built using Java Swing for an attractive and interactive desi
+
+Technologies Used:
+
+Java
+Java Swing (for GUI Design)
+Object-Oriented Programming (OOP)
+
+OOP Concepts Used:
+
+Class and Object: For example, Question, QuizGame, Player
+Inheritance: For example, StudentPlayer extends Player
+Encapsulation: Properties are kept private and accessed through methods.
+Polymorphism: Quiz behavior changes based on selected question type or level.
+
+
+How It Works:
+
+1. When the game starts, the user inputs their name.
+2. Then, they select a subject and a difficulty level.
+3. The game displays questions based on the chosen subject and level.
+4. The user selects an option for each question and clicks “Next”.
+5. At the end, the final score is displayed.
